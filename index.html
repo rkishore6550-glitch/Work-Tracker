@@ -137,7 +137,60 @@ code{font-family:inherit;font-weight:700;background:var(--chip);padding:1px 6px;
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .filters input,.filters select,.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 10px;min-width:0}
 .filters input{flex:1 1 220px}
-.cols{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;align-items:start}
+.showing{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-4px 0 12px;font-size:14px;color:var(--muted)}
+.task{cursor:pointer}
+.task:hover{background:var(--paper)}
+.chip.step{background:var(--cyan-bg);color:var(--cyan);font-weight:700;max-width:300px;overflow:hidden;text-overflow:ellipsis}
+.chip.step.other{background:var(--violet-bg);color:var(--violet)}
+.mini.ns{color:var(--blue);border-color:var(--blue)}
+.chip.st-todo{background:var(--blue-bg);color:var(--blue);font-weight:700}
+.chip.st-doing{background:var(--cyan-bg);color:var(--cyan);font-weight:700}
+.chip.st-waiting{background:var(--violet-bg);color:var(--violet);font-weight:700}
+.chip.st-done{background:var(--green-bg);color:var(--green);font-weight:700}
+.thead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px 8px}
+.thead h2{margin:0;font:700 22px/1.25 var(--display)}
+.thead .x{border:0;background:none;font-size:16px;color:var(--muted);padding:4px 8px;border-radius:8px}
+.thead .x:hover{background:var(--chip);color:var(--ink)}
+.ttabs{display:flex;gap:4px;border-bottom:1px solid var(--line);padding:0 20px}
+.ttabs button{border:0;background:none;padding:10px 12px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px}
+.ttabs button[aria-selected="true"]{color:var(--blue);border-bottom-color:var(--blue)}
+[hidden]{display:none!important}
+#pane-progress{padding:16px 20px 20px;display:grid;gap:14px}
+.psum{display:flex;flex-wrap:wrap;gap:6px}
+.curstep{border-radius:12px;padding:12px 14px;background:var(--cyan-bg);border-left:4px solid var(--cyan);display:grid;gap:2px}
+.curstep.other{background:var(--violet-bg);border-left-color:var(--violet)}
+.curstep .lbl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.curstep .txt{font-weight:700;font-size:17px}
+.curstep .meta{font-size:14px;color:var(--muted)}
+.curstep .acts{justify-content:flex-start;margin-top:6px}
+.nsbox{border:1px solid var(--blue);border-radius:12px;padding:14px;display:grid;gap:10px;background:var(--blue-bg)}
+.nsbox input{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 10px;min-width:0}
+.nsbox label{font-weight:700;font-size:14px}
+.nsbox .seg{justify-self:start}
+.pacts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.tlh{margin:4px 0 0;font:700 16px/1.2 var(--display)}
+.tl{list-style:none;margin:0;padding:0;position:relative}
+.tl::before{content:"";position:absolute;left:9px;top:10px;bottom:10px;width:2px;background:var(--line)}
+.tl li{position:relative;display:grid;grid-template-columns:20px 1fr;gap:10px;padding:5px 0}
+.tl .dot{width:14px;height:14px;border-radius:50%;margin:12px 0 0 3px;background:var(--surface);border:3px solid var(--slate);position:relative;z-index:1;box-sizing:border-box}
+.tl-step>div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tl-step.start .dot{border-color:var(--blue);background:var(--blue)}
+.tl-step.me .dot{border-color:var(--cyan)}
+.tl-step.other .dot{border-color:var(--violet)}
+.tl-step.fin.me .dot{background:var(--cyan)}
+.tl-step.fin.other .dot{background:var(--violet)}
+.tl-step.cur>div{border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-bg)}
+.tl-step.cur .dot{border-color:var(--amber);background:var(--surface)}
+.tl-top{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--muted)}
+.tl-top b{color:var(--ink);font-size:13px}
+.tl-txt{font-weight:700;margin-top:2px}
+.tl-meta{font-size:13.5px;color:var(--muted);margin-top:2px}
+.tl-log{font-size:13.5px;color:var(--muted)}
+.tl-log .dot{width:10px;height:10px;border-width:2px;margin:6px 0 0 5px}
+.tl-log time{font-size:12.5px;margin-right:6px}
+.tl-log.done{color:var(--green);font-weight:700}
+.tl-log.done .dot{border-color:var(--green);background:var(--green)}
 .col h2{font:700 16px/1.2 var(--display);margin:0 0 8px;display:flex;gap:8px;align-items:center}
 .col .list .task{grid-template-columns:auto 1fr}
 .col .list .acts{grid-column:2;justify-content:flex-start}
@@ -363,11 +416,13 @@ async function ntfy(title, msg, when, tags, prio){
     return r.ok;
   } catch(e){ return false; }
 }
+const waitWho = t => t.waitWho || t.team || t.from || '';
+const curStep = t => { const st = t.steps || []; const l = st[st.length - 1]; return l && !l.doneTs ? l : null; };
 function scheduleNudge(t){
   if (!t.nextNudge) return;
-  const who = t.team || t.from || 'someone';
+  const who = waitWho(t) || 'someone', cs = curStep(t);
   ntfy('Follow up: ' + t.title,
-       `Waiting on ${who} since ${fmtD(dsOf(t.waitingSince || t.created))}.${t.ticket ? ' Ticket: ' + t.ticket : ''} Open Worklog to mark it followed up or unblocked.`,
+       `Waiting on ${who} since ${fmtD(dsOf(t.waitingSince || t.created))}.${cs && cs.owner === 'other' ? ' Step: ' + cs.text + '.' : ''}${t.ticket ? ' Ticket: ' + t.ticket : ''} Open Worklog to mark it followed up or unblocked.`,
        t.nextNudge, 'hourglass_flowing_sand', 4);
 }
 function digest(day){
@@ -381,7 +436,7 @@ function digest(day){
   const sec = (h, arr, f) => { if (!arr.length) return; if (L.length) L.push(''); L.push(`${h} (${arr.length})`); arr.slice(0,8).forEach(t => L.push('• ' + f(t))); if (arr.length > 8) L.push(`+${arr.length-8} more`); };
   sec('Overdue', late, t => `${t.title} (was due ${fmtD(t.due)})`);
   sec('Due today', due, t => t.title + (t.from ? ` (for ${t.from})` : ''));
-  sec('Chase', wait, t => `${t.team || t.from || 'Someone'}: ${t.title}, waiting since ${fmtD(dsOf(t.waitingSince || t.created))}`);
+  sec('Chase', wait, t => `${waitWho(t) || 'Someone'}: ${t.title}, waiting since ${fmtD(dsOf(t.waitingSince || t.created))}`);
   sec('In progress', doing, t => t.title);
   return L.join('\n') || 'Nothing due. Pick something from your to-do list.';
 }
@@ -494,7 +549,7 @@ function setStatus(t, st){
   t.status = st;
   if (st === 'waiting'){ t.waitingSince = Date.now(); t.nextNudge = nudgeAt(Date.now() + t.followupHrs*36e5); scheduleNudge(t); }
   else t.nextNudge = null;
-  if (st === 'done'){ t.done = Date.now(); spawnRepeat(t); } else t.done = null;
+  if (st === 'done'){ t.done = Date.now(); const cs = curStep(t); if (cs) cs.doneTs = t.done; spawnRepeat(t); } else t.done = null;
   t.log.push({ts: Date.now(), text: 'Moved to ' + STATUS[st]});
 }
 function spawnRepeat(t){
@@ -637,7 +692,7 @@ function setMode(m){
 /* ---------- rendering ---------- */
 let view = (location.hash || '#today').slice(1);
 if (!['today','board','waiting','log','review','settings'].includes(view)) view = 'today';
-const F = {q:'', proj:'', who:''};
+const F = {q:'', proj:'', who:'', done:'all'};
 const R = {from: mondayOf(today()), to: addDays(mondayOf(today()), 6)};
 let logDays = 14;
 
@@ -674,6 +729,8 @@ function card(t){
   if (!open && t.done) c.push(`<span class="chip donec">Done ${fmtD(dsOf(t.done))}, ${fmtT(t.done)}</span>`);
   if (t.repeat && t.repeat !== 'none') c.push(`<span class="chip">Repeats ${t.repeat === 'workdays' ? 'every workday' : t.repeat}</span>`);
   if (t.ticket) c.push(/^https?:\/\//.test(t.ticket) ? `<a class="chip" href="${esc(t.ticket)}" target="_blank" rel="noopener">Open ticket</a>` : `<span class="chip">${esc(t.ticket)}</span>`);
+  const cs = open ? curStep(t) : null;
+  if (cs) c.unshift(`<span class="chip step ${cs.owner}" title="${esc(cs.text)}">Next: ${esc(cs.text)}${cs.owner === 'other' ? ' (' + esc(cs.who) + ')' : ''}</span>`);
   const A = atts(t);
   for (const a of A.slice(0, 3)) c.push(a.kind === 'link'
     ? `<a class="chip att" href="${esc(a.url)}" target="_blank" rel="noopener" title="${esc(a.url)}">🔗 ${esc(a.name)}</a>`
@@ -683,7 +740,8 @@ function card(t){
   if ((late || dueToday) && t.status !== 'waiting') acts += `<button class="mini" data-act="push">Move to tomorrow</button>`;
   if (t.status === 'waiting') acts += `<button class="mini waitc" data-act="chase">Followed up</button><button class="mini" data-act="unblock">Unblocked</button>`;
   else if (t.status === 'todo') acts += `<button class="mini" data-act="start">Start</button>`;
-  acts += `<button class="mini" data-act="open">Edit</button>`;
+  if (open) acts += `<button class="mini ns" data-act="nextstep">Next step</button>`;
+  acts += `<button class="mini" data-act="edit">Edit</button>`;
   return `<li class="task ${t.status} ${t.priority === 'high' && open ? 'pri' : ''}" data-id="${t.id}">
     <button class="check" data-act="toggle" aria-label="${open ? 'Mark done' : 'Mark not done'}">${open ? '' : '✓'}</button>
     <div class="body"><button class="title" data-act="open"><span class="${late || dueToday ? 'hl' : ''}">${esc(t.title)}</span></button><div class="chips">${c.join('')}</div></div>
@@ -737,30 +795,35 @@ function vToday(){
 }
 
 function vBoard(){
-  const people = [...new Set(S.tasks.flatMap(t => [t.from, t.team]).filter(Boolean))].sort();
-  return `<header class="pagehead"><div><h1>All tasks</h1><p>Everything open, plus what you finished in the last 7 days.</p></div></header>
+  const people = [...new Set(S.tasks.flatMap(t => [t.from, t.team, t.waitWho]).filter(Boolean))].sort();
+  return `<header class="pagehead"><div><h1>All tasks</h1><p>Every task you've added. Click a task to see its progress.</p></div></header>
   <div class="filters">
     <input id="fq" type="search" placeholder="Search tasks" value="${esc(F.q)}" aria-label="Search tasks">
     <select id="fp" aria-label="Project"><option value="">All projects</option>${projects().map(p => `<option ${F.proj === p ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select>
     <select id="fw" aria-label="Person or team"><option value="">Everyone</option>${people.map(p => `<option ${F.who === p ? 'selected' : ''}>${esc(p)}</option>`).join('')}</select>
-  </div><div class="cols" id="cols">${boardCols()}</div>`;
+    <select id="fd" aria-label="Done tasks to show">${[['all','Done: all time'],['30','Done: last 30 days'],['7','Done: last 7 days']].map(([v,l]) => `<option value="${v}" ${F.done === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+  </div><div id="cols">${boardCols()}</div>`;
 }
 function boardCols(){
-  const q = F.q.toLowerCase(), weekAgo = Date.now() - 7*DAY;
+  const q = F.q.toLowerCase(), since = F.done === 'all' ? 0 : Date.now() - (+F.done)*DAY;
   const match = t => (!q || (t.title + ' ' + t.notes + ' ' + t.ticket + ' ' + t.from + ' ' + t.team + ' ' + atts(t).map(a => a.name + ' ' + (a.url || '')).join(' ')).toLowerCase().includes(q))
-    && (!F.proj || t.project === F.proj) && (!F.who || t.from === F.who || t.team === F.who);
-  return ['todo','doing','waiting','done'].map(st => {
-    let arr = S.tasks.filter(t => t.status === st && match(t));
-    if (st === 'done') arr = arr.filter(t => t.done > weekAgo).sort((a,b) => b.done - a.done);
+    && (!F.proj || t.project === F.proj) && (!F.who || t.from === F.who || t.team === F.who || t.waitWho === F.who);
+  let shown = 0;
+  const cols = ['todo','doing','waiting','done'].map(st => {
+    let arr = S.tasks.filter(t => (t.status === st || (st === 'todo' && !STATUS[t.status])) && match(t));
+    if (st === 'done') arr = arr.filter(t => (t.done || t.created) >= since).sort((a,b) => (b.done || 0) - (a.done || 0));
     else arr.sort(byDue);
+    shown += arr.length;
     return `<div class="col c-${{todo:'blue',doing:'cyan',waiting:'violet',done:'green'}[st]}"><h2>${STATUS[st]}<span class="count">${arr.length}</span></h2>${arr.length ? listHtml(arr) : '<p class="empty">None</p>'}</div>`;
   }).join('');
+  const filtered = F.q || F.proj || F.who || F.done !== 'all';
+  return `<div class="showing">Showing ${shown} of ${S.tasks.length} tasks${filtered ? ' <button class="mini" data-act="clearf">Clear filters</button>' : ''}</div><div class="cols">${cols}</div>`;
 }
 
 function vWaiting(){
   const w = S.tasks.filter(t => t.status === 'waiting').sort((a,b) => (a.waitingSince || 0) - (b.waitingSince || 0));
   const groups = {};
-  w.forEach(t => (groups[t.team || t.from || 'Someone else'] ||= []).push(t));
+  w.forEach(t => (groups[waitWho(t) || 'Someone else'] ||= []).push(t));
   let html = `<header class="pagehead"><div><h1>Waiting on others</h1><p>Tickets and requests you're blocked on. Tap Followed up after you ping someone, and you'll be reminded again in ${S.settings.followupHrs} h unless you set a different gap on the task.</p></div></header>`;
   if (!w.length) return html + `<p class="empty">Nothing pending with other teams. Add one with <code>^backend</code> or <code>^data</code> in the task box.</p>`;
   for (const [g, arr] of Object.entries(groups).sort((a,b) => b[1].length - a[1].length)) html += section(esc(g), arr, '', 'c-violet');
@@ -838,7 +901,7 @@ function vReview(){
     <div class="panel c-green"><h3>What I finished</h3>${r.done.length ? Object.entries(groups).map(([g,arr]) => `<div class="rgroup">${esc(g)}</div><ul class="rlist">${arr.map(t => li(t, t.from ? 'for ' + esc(t.from) : '')).join('')}</ul>`).join('') : '<p class="empty">Nothing in this range.</p>'}</div>
     <div class="panel">
       <h3 style="color:var(--cyan)">In progress</h3>${r.doing.length ? `<ul class="rlist">${r.doing.map(t => li(t, t.due ? 'due ' + fmtD(t.due) : '')).join('')}</ul>` : '<p class="empty">Nothing in progress.</p>'}
-      <h3 style="margin-top:18px;color:var(--violet)">Waiting on others</h3>${r.waiting.length ? `<ul class="rlist">${r.waiting.map(t => li(t, `${esc(t.team || t.from || 'Someone')}, ${span(Date.now() - (t.waitingSince || t.created))}`)).join('')}</ul>` : '<p class="empty">No blockers.</p>'}
+      <h3 style="margin-top:18px;color:var(--violet)">Waiting on others</h3>${r.waiting.length ? `<ul class="rlist">${r.waiting.map(t => li(t, `${esc(waitWho(t) || 'Someone')}, ${span(Date.now() - (t.waitingSince || t.created))}`)).join('')}</ul>` : '<p class="empty">No blockers.</p>'}
       <h3 style="margin-top:18px;color:var(--blue)">Up next</h3>${r.next.length ? `<ul class="rlist">${r.next.map(t => li(t, t.due ? 'due ' + fmtD(t.due) : 'high priority')).join('')}</ul>` : '<p class="empty">Nothing scheduled for next week.</p>'}
     </div>
   </div>`;
@@ -849,8 +912,8 @@ function reviewText(){
   const block = (h, arr, f) => { if (!arr.length) return; L.push(`${h} (${arr.length})`); arr.forEach(t => L.push('• ' + f(t))); L.push(''); };
   const lnk = t => { const l = atts(t).find(a => a.kind === 'link'); return l ? ` ${l.url}` : ''; };
   block('Done', r.done, t => tag(t) + t.title + (t.from ? ` (for ${t.from})` : '') + lnk(t));
-  block('In progress', r.doing, t => tag(t) + t.title + (t.due ? `, due ${fmtD(t.due)}` : '') + lnk(t));
-  block('Waiting on others', r.waiting, t => `${t.team || t.from || 'Someone'}: ${t.title}${t.ticket ? ` (${t.ticket})` : ''}, pending since ${fmtD(dsOf(t.waitingSince || t.created))}`);
+  block('In progress', r.doing, t => { const cs = curStep(t); return tag(t) + t.title + (cs ? `, next: ${cs.text}` : '') + (t.due ? `, due ${fmtD(t.due)}` : '') + lnk(t); });
+  block('Waiting on others', r.waiting, t => `${waitWho(t) || 'Someone'}: ${t.title}${t.ticket ? ` (${t.ticket})` : ''}, pending since ${fmtD(dsOf(t.waitingSince || t.created))}`);
   block('Up next', r.next, t => tag(t) + t.title + (t.due ? `, due ${fmtD(t.due)}` : ''));
   return L.join('\n').trim();
 }
@@ -909,18 +972,23 @@ function render(){
 }
 function go(v){ view = v; try { history.replaceState(null, '', '#' + v); } catch(e) {} document.body.classList.remove('present'); render(); try { window.scrollTo(0,0); } catch(e) {} }
 
-/* ---------- editor ---------- */
+/* ---------- task window: Progress + Details ---------- */
 let editing = null;
-function openEditor(id, preset){
+const MIC = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+function openEditor(id, preset, tab, focusStep){
   const isNew = !id;
   const t = isNew ? newTask(preset || {}) : find(id);
   if (!t) return;
-  editing = {t, isNew};
+  editing = {t, isNew, nsOwner: 'me'};
+  tab = isNew ? 'details' : (tab || 'progress');
   const s = S.settings;
   const opt = (obj, val) => Object.entries(obj).map(([k,l]) => `<option value="${k}" ${k === val ? 'selected' : ''}>${l}</option>`).join('');
-  $('#dlg').innerHTML = `<form class="ed" id="ed">
-    <h2>${isNew ? 'New task' : 'Edit task'}</h2>
-    <div class="field"><div class="labelrow"><label for="e-title">Task</label><button type="button" class="mini mic" data-act="mic" data-for="e-title"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Speak</button></div><input id="e-title" class="titlein" required value="${isNew && !preset?.title ? '' : esc(t.title)}"></div>
+  $('#dlg').innerHTML = `<div class="tdlg">
+    <div class="thead"><h2 id="t-head">${isNew ? 'New task' : esc(t.title)}</h2><button type="button" class="x" data-act="cancel" aria-label="Close">✕</button></div>
+    ${isNew ? '' : `<div class="ttabs" role="tablist"><button type="button" role="tab" data-tab="progress">Progress</button><button type="button" role="tab" data-tab="details">Details &amp; edit</button></div>
+    <div id="pane-progress"></div>`}
+    <form class="ed" id="ed">
+    <div class="field"><div class="labelrow"><label for="e-title">Task</label><button type="button" class="mini mic" data-act="mic" data-for="e-title">${MIC}Speak</button></div><input id="e-title" class="titlein" required value="${isNew && !preset?.title ? '' : esc(t.title)}"></div>
     <div class="row">
       <div class="field"><label for="e-kind">Type of work</label><select id="e-kind">${opt(KINDS, t.kind)}</select></div>
       <div class="field"><label for="e-status">Status</label><select id="e-status">${opt(STATUS, t.status)}</select></div>
@@ -943,10 +1011,7 @@ function openEditor(id, preset){
       <div class="addlog"><input id="e-url" placeholder="Paste a link: Google Sheet, Doc, Jira, Slack thread"><button type="button" class="btn" data-act="addlink">Add link</button></div>
       <div class="attrow"><button type="button" class="btn" data-act="attachfile">Attach a file</button><small>or drop files here. Files are kept in this browser only.</small></div>
       <ul class="attlist" id="e-atts">${attList(t)}</ul></div>
-    <div class="field"><div class="labelrow"><label for="e-notes">Notes</label><button type="button" class="mini mic" data-act="mic" data-for="e-notes"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Speak</button></div><textarea id="e-notes" rows="3">${esc(t.notes)}</textarea></div>
-    ${isNew ? '' : `<div class="field"><label for="e-log">Updates</label>
-      <div class="addlog"><input id="e-log" placeholder="e.g. Pinged backend on Slack, ETA Thursday"><button type="button" class="mini mic" data-act="mic" data-for="e-log"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Speak</button><button type="button" class="btn" data-act="addlog">Add update</button></div>
-      <ul class="edlog">${[...t.log].reverse().map(l => `<li><time>${fmtD(dsOf(l.ts))}, ${fmtT(l.ts)}</time>${esc(l.text)}</li>`).join('')}</ul></div>`}
+    <div class="field"><div class="labelrow"><label for="e-notes">Notes</label><button type="button" class="mini mic" data-act="mic" data-for="e-notes">${MIC}Speak</button></div><textarea id="e-notes" rows="3">${esc(t.notes)}</textarea></div>
     <div class="edfoot">
       <div>${isNew ? '' : '<button type="button" class="btn danger" data-act="delete">Delete task</button>'}</div>
       <div style="display:flex;gap:8px"><button type="button" class="btn" data-act="cancel">Cancel</button><button type="submit" class="btn primary">${isNew ? 'Add task' : 'Save changes'}</button></div>
@@ -954,9 +1019,107 @@ function openEditor(id, preset){
     <datalist id="dl-people">${s.people.map(p => `<option value="${esc(p)}">`).join('')}</datalist>
     <datalist id="dl-teams">${s.teams.map(p => `<option value="${esc(p)}">`).join('')}</datalist>
     <datalist id="dl-proj">${projects().map(p => `<option value="${esc(p)}">`).join('')}</datalist>
-  </form>`;
+    </form></div>`;
+  if (!isNew) renderProgress(focusStep);
+  showTab(tab);
   $('#dlg').showModal();
-  $('#e-title').focus();
+  if (tab === 'details') $('#e-title').focus();
+  else if (focusStep) $('#ns-text').focus();
+  else $('#dlg').querySelector('.ttabs button').focus();
+}
+function showTab(tab){
+  if (!editing) return;
+  editing.tab = tab;
+  document.querySelectorAll('.ttabs [data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  const pp = $('#pane-progress'); if (pp) pp.hidden = tab !== 'progress';
+  $('#ed').hidden = tab !== 'details';
+}
+const originText = t => t.kind === 'assigned' ? (t.from ? 'Given by ' + t.from : 'Assigned to me')
+  : t.kind === 'ticket' ? 'Ticket raised' + (t.team ? ' to ' + t.team : '')
+  : t.kind === 'request' ? 'Request to ' + (t.team || t.from || 'a team')
+  : 'My own work' + (t.from ? ', for ' + t.from : '');
+function timeline(t){
+  const items = [{ts: t.created, type: 'start'}];
+  (t.steps || []).forEach((st, i) => items.push({ts: st.ts, type: 'step', st, n: i + 2}));
+  t.log.forEach(l => {
+    if (l.text === 'Created' || /^Moved to (To do|In progress|Waiting on others)$/.test(l.text)) return;
+    items.push({ts: l.ts, type: 'log', l});
+  });
+  items.sort((a,b) => a.ts - b.ts);
+  return items.map(it => {
+    const when = `${fmtD(dsOf(it.ts))}, ${fmtT(it.ts)}`;
+    if (it.type === 'start') return `<li class="tl-step start"><span class="dot"></span><div><div class="tl-top"><b>Step 1</b><time>${when}</time></div><div class="tl-txt">${esc(t.title)}</div><div class="tl-meta">${esc(originText(t))}</div></div></li>`;
+    if (it.type === 'step'){
+      const st = it.st, cur = !st.doneTs && t.status !== 'done';
+      return `<li class="tl-step ${st.owner} ${cur ? 'cur' : 'fin'}"><span class="dot"></span><div><div class="tl-top"><b>Step ${it.n}${cur ? ', current' : ''}</b><time>${when}</time></div><div class="tl-txt">${esc(st.text)}</div>
+        <div class="tl-meta">${st.owner === 'other' ? 'With ' + esc(st.who) : 'On me'}${st.due ? ', due ' + fmtD(st.due) : ''}${st.doneTs ? `. Completed ${fmtD(dsOf(st.doneTs))}` : ''}</div></div></li>`;
+    }
+    const done = it.l.text === 'Moved to Done' || it.l.text === 'Logged as done';
+    return `<li class="tl-log ${done ? 'done' : ''}"><span class="dot"></span><div><time>${when}</time>${esc(done ? 'Task completed' : it.l.text)}</div></li>`;
+  }).join('');
+}
+function renderProgress(openForm){
+  if (!editing || !$('#pane-progress')) return;
+  const t = editing.t, cs = curStep(t), s = S.settings, open = t.status !== 'done';
+  const td = today(), late = open && t.due && t.due < td;
+  const who = [...new Set([...s.people, ...s.teams])];
+  editing.nsOwner = 'me';
+  $('#t-head').textContent = t.title;
+  $('#pane-progress').innerHTML = `
+    <div class="psum"><span class="chip st-${t.status}">${STATUS[t.status] || 'To do'}</span>
+      ${t.due ? `<span class="chip ${late ? 'late' : t.due === td && open ? 'today' : ''}">Due ${t.due === td ? 'today' : fmtD(t.due)}</span>` : ''}
+      ${t.project ? `<span class="chip proj">#${esc(t.project)}</span>` : ''}
+      ${t.status === 'waiting' && waitWho(t) ? `<span class="chip wait">Waiting on ${esc(waitWho(t))}</span>` : ''}
+      <span class="chip">Started ${fmtD(dsOf(t.created))}</span>
+      ${t.done ? `<span class="chip donec">Done ${fmtD(dsOf(t.done))}</span>` : ''}</div>
+    ${cs && open ? `<div class="curstep ${cs.owner}"><span class="lbl">Current step</span><span class="txt">${esc(cs.text)}</span>
+      <span class="meta">${cs.owner === 'other' ? 'With ' + esc(cs.who) : 'On you'} since ${fmtD(dsOf(cs.ts))}${cs.due ? ', due ' + fmtD(cs.due) : ''}</span>
+      ${t.status === 'waiting' ? `<div class="acts"><button type="button" class="mini waitc" data-act="pchase">I followed up</button></div>` : ''}</div>` : ''}
+    <div class="nsbox" id="nsbox" ${openForm ? '' : 'hidden'}>
+      <div class="labelrow"><label for="ns-text">What's the next step?</label><button type="button" class="mini mic" data-act="mic" data-for="ns-text">${MIC}Speak</button></div>
+      <input id="ns-text" placeholder="e.g. Share cleaned data with Rohan for sign-off">
+      <div class="seg" role="group" aria-label="Who does this step"><button type="button" data-own="me" aria-pressed="true">I'll do it</button><button type="button" data-own="other" aria-pressed="false">Someone else</button></div>
+      <div class="row" id="ns-other" hidden>
+        <div class="field"><label for="ns-who">Who is it with</label><input id="ns-who" list="dl-who" placeholder="Rohan, Backend team"></div>
+        <div class="field"><label for="ns-fu">Remind me to chase every (hours)</label><input type="number" min="0.5" step="0.5" id="ns-fu" value="${t.followupHrs}"></div>
+      </div>
+      <div class="row"><div class="field"><label for="ns-due">Due date (optional)</label><input type="date" id="ns-due"></div></div>
+      <datalist id="dl-who">${who.map(p => `<option value="${esc(p)}">`).join('')}</datalist>
+      <div class="pacts"><button type="button" class="btn" data-act="nscancel">Cancel</button><button type="button" class="btn primary" data-act="nsadd">Add step</button></div>
+    </div>
+    <div class="pacts" ${openForm ? 'hidden' : ''} id="pbtns">${open ? `<button type="button" class="btn primary" data-act="nsopen">+ Next step</button>` : ''}<button type="button" class="btn" data-act="pdone">${open ? 'Mark task done' : 'Reopen task'}</button></div>
+    <div class="addlog"><input id="e-log" placeholder="Quick update, e.g. Pinged backend on Slack, ETA Thursday"><button type="button" class="mini mic" data-act="mic" data-for="e-log">${MIC}Speak</button><button type="button" class="btn" data-act="addlog">Add update</button></div>
+    <h3 class="tlh">Timeline</h3>
+    <ol class="tl">${timeline(t)}</ol>`;
+}
+function syncDetails(){
+  const t = editing && editing.t; if (!t || !$('#e-status')) return;
+  $('#e-status').value = t.status; $('#e-due').value = t.due || ''; $('#e-fu').value = t.followupHrs;
+}
+function afterProgressChange(openForm){ persist(); renderProgress(openForm); syncDetails(); render(); }
+function addStep(){
+  const t = editing.t, text = $('#ns-text').value.trim();
+  if (!text){ toast('Describe the next step'); $('#ns-text').focus(); return; }
+  const owner = editing.nsOwner || 'me', who = owner === 'other' ? $('#ns-who').value.trim() : '';
+  if (owner === 'other' && !who){ toast('Add who the step is with'); $('#ns-who').focus(); return; }
+  const due = $('#ns-due').value, now = Date.now();
+  const steps = t.steps || (t.steps = []);
+  const cs = curStep(t); if (cs) cs.doneTs = now;
+  steps.push({id: 's' + rand(8), ts: now, text, owner, who, due});
+  if (due) t.due = due;
+  if (owner === 'other'){
+    t.waitWho = who;
+    t.followupHrs = Math.max(0.5, parseFloat($('#ns-fu').value) || t.followupHrs);
+    if (t.status === 'waiting'){ t.waitingSince = now; t.nextNudge = nudgeAt(now + t.followupHrs*36e5); scheduleNudge(t); }
+    else setStatus(t, 'waiting');
+    const s = S.settings;
+    if (![...s.people, ...s.teams].some(p => p.toLowerCase() === who.toLowerCase())) s.people.push(who);
+  } else {
+    t.waitWho = '';
+    if (t.status !== 'doing') setStatus(t, 'doing');
+  }
+  afterProgressChange(false);
+  toast(owner === 'other' ? `Step added. You'll be reminded to chase ${who}` : 'Step added. It is on you now');
 }
 function attList(t){
   return atts(t).map(a => `<li>${a.kind === 'link'
@@ -1065,16 +1228,39 @@ document.addEventListener('click', e => {
   }
   const ld = e.target.closest('[data-logdays]');
   if (ld){ logDays = +ld.dataset.logdays; render(); return; }
-  const a = e.target.closest('[data-act]'); if (!a) return;
+  const tabBtn = e.target.closest('[data-tab]');
+  if (tabBtn){ showTab(tabBtn.dataset.tab); return; }
+  const own = e.target.closest('[data-own]');
+  if (own && editing){
+    editing.nsOwner = own.dataset.own;
+    own.parentElement.querySelectorAll('[data-own]').forEach(b => b.setAttribute('aria-pressed', String(b === own)));
+    $('#ns-other').hidden = editing.nsOwner !== 'other';
+    if (editing.nsOwner === 'other') $('#ns-who').focus();
+    return;
+  }
+  const a = e.target.closest('[data-act]');
+  if (!a){
+    const card = e.target.closest('#view .task');
+    if (card && !e.target.closest('a,button,input,select,textarea')) openEditor(card.dataset.id, null, 'progress');
+    return;
+  }
   const act = a.dataset.act, row = a.closest('.task'), t = row ? find(row.dataset.id) : null;
   switch (act){
     case 'toggle': if (!t) return; setStatus(t, t.status === 'done' ? 'todo' : 'done'); commit(); if (t.status === 'done') toast('Marked done'); break;
-    case 'open': if (t) openEditor(t.id); break;
+    case 'open': if (t) openEditor(t.id, null, 'progress'); break;
+    case 'edit': if (t) openEditor(t.id, null, 'details'); break;
+    case 'nextstep': if (t) openEditor(t.id, null, 'progress', true); break;
+    case 'clearf': F.q = ''; F.proj = ''; F.who = ''; F.done = 'all'; render(); break;
+    case 'nsopen': $('#nsbox').hidden = false; $('#pbtns').hidden = true; $('#ns-text').focus(); break;
+    case 'nscancel': $('#nsbox').hidden = true; $('#pbtns').hidden = false; break;
+    case 'nsadd': if (editing) addStep(); break;
+    case 'pchase': if (editing){ followedUp(editing.t); afterProgressChange(false); } break;
+    case 'pdone': if (editing){ const et = editing.t; setStatus(et, et.status === 'done' ? 'doing' : 'done'); afterProgressChange(false); toast(et.status === 'done' ? 'Task marked done' : 'Task reopened'); } break;
     case 'start': if (t){ setStatus(t, 'doing'); commit(); } break;
     case 'push': if (t){ t.due = addDays(today(), 1); t.log.push({ts: Date.now(), text: 'Moved to tomorrow'}); commit(); toast('Moved to tomorrow'); } break;
     case 'mic': { const inp = document.getElementById(a.dataset.for); if (inp) dictate(inp, a); break; }
     case 'chase': if (t){ followedUp(t); commit(); } break;
-    case 'unblock': if (t){ t.log.push({ts: Date.now(), text: 'Unblocked'}); setStatus(t, 'doing'); commit(); toast('Moved to In progress'); } break;
+    case 'unblock': if (t){ t.log.push({ts: Date.now(), text: 'Unblocked'}); const cs = curStep(t); if (cs && cs.owner === 'other') cs.doneTs = Date.now(); t.waitWho = ''; setStatus(t, 'doing'); commit(); toast('Moved to In progress'); } break;
     case 'sendplan': ntfy("Today's plan", digest(today()), null, 'sunrise', 3).then(ok => toast(ok ? 'Sent to your phone' : 'Could not send. Check the topic in Settings and that reminders are on.')); break;
     case 'test': ntfy('Worklog is connected', 'Reminders will arrive here.', null, 'white_check_mark', 3).then(ok => toast(ok ? 'Test sent. Check your phone.' : 'Could not send. Check your internet and that reminders are on.')); break;
     case 'copytopic': copy(S.settings.topic).then(() => toast('Topic copied')); break;
@@ -1098,8 +1284,7 @@ document.addEventListener('click', e => {
       const inp = $('#e-log'), txt = inp.value.trim();
       if (!txt || !editing) return;
       editing.t.log.push({ts: Date.now(), text: txt}); inp.value = '';
-      $('.edlog').insertAdjacentHTML('afterbegin', `<li><time>${fmtD(today())}, ${fmtT(Date.now())}</time>${esc(txt)}</li>`);
-      persist();
+      afterProgressChange(false); toast('Update added');
       break;
     }
   }
@@ -1107,6 +1292,7 @@ document.addEventListener('click', e => {
 document.addEventListener('submit', e => { if (e.target.id === 'ed'){ e.preventDefault(); saveEditor(); } });
 document.addEventListener('keydown', e => {
   if (e.target.id === 'e-url' && e.key === 'Enter'){ e.preventDefault(); addLink(); }
+  if (e.target.id === 'ns-text' && e.key === 'Enter'){ e.preventDefault(); addStep(); }
   if (e.target.id === 'e-log' && e.key === 'Enter'){ e.preventDefault(); document.querySelector('[data-act="addlog"]').click(); }
   if (e.key === 'Escape' && document.body.classList.contains('present')){ document.body.classList.remove('present'); }
   const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || $('#dlg').open;
@@ -1119,6 +1305,7 @@ document.addEventListener('change', e => {
   const el = e.target;
   if (el.id === 'fp'){ F.proj = el.value; $('#cols').innerHTML = boardCols(); return; }
   if (el.id === 'fw'){ F.who = el.value; $('#cols').innerHTML = boardCols(); return; }
+  if (el.id === 'fd'){ F.done = el.value; $('#cols').innerHTML = boardCols(); return; }
   if (el.id === 'rf' || el.id === 'rt'){
     const f = $('#rf').value, t = $('#rt').value;
     if (f && t && f <= t){ R.from = f; R.to = t; render(); }
